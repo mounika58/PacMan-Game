@@ -13,12 +13,16 @@ var enemy = {
     speed: 5,
     moving: 0,
     dirx: 0,
-    diry: 0
+    diry: 0,
+    flash: 0,
+    ghosteat: false
 };
 var powerdot = {
     x: 10,
     y: 10,
-    powerup: false
+    powerup: false,
+    pcountdown: 0,
+    ghostNum: 0
 };
 
 
@@ -76,6 +80,12 @@ function myNum(n){
     context.fillStyle = "#5a82c4";
     context.fillRect(0,0,canvas.width, canvas.height);
 
+    if(!powerdot.powerup && powerdot.pcountdown < 5){
+        powerdot.x = myNum(420)+ 30;
+        powerdot.y = myNum(250);
+        powerdot.powerup = true;
+    }
+
     if(!ghost){
         enemy.ghostNum = myNum(5)* 64;
         enemy.x = myNum(450);
@@ -87,6 +97,9 @@ function myNum(n){
         enemy.speed = myNum(3)+1;
         enemy.dirx = 0;
         enemy.diry = 0;
+        if(powerdot.ghosteat){
+            enemy.speed = enemy.speed*-1;
+        }
         if(enemy.moving % 2){
             if(player.x < enemy.x){enemy.dirx = -enemy.speed;} else {enemy.dirx = enemy.speed;}
         }else{
@@ -104,14 +117,67 @@ function myNum(n){
      if(enemy.y < 0) {enemy.y=(canvas.height-32);}
 
 
+     //Collision Detection Ghost
+     if(player.x <= (enemy.x+26) && enemy.x <= (player.x+26) && player.y <= (enemy.y+26) && enemy.y <= (player.y + 32)){
+         console.log('ghost');
+         if(powerdot.ghosteat){
+
+             score++;
+         }
+         else{
+             gscore++;
+         }
+         player.x = 10;
+         player.y = 100;
+         enemy.x = 300;
+         enemy.y = 200;
+
+         powerdot.pcountdown = 0;
+
+     }
+
+     //Collision Detection Powerup
+     if(player.x <= powerdot.x && powerdot.x <= (player.x+32) && player.y <= (powerdot.y) && powerdot.y <= (player.y + 32)){
+         console.log('hit');
+         powerdot.powerup = false;
+         powerdot.pcountdown = 500;
+         powerdot.ghostNum = enemy.ghostNum;
+         enemy.ghostNum = 384;
+         powerdot.x = 0;
+         powerdot.y = 0;
+         powerdot.ghosteat = true;
+     }
+
+     if(powerdot.ghosteat){
+         powerdot.pcountdown--;
+         if(powerdot.pcountdown-- <= 0){
+             powerdot.ghosteat = true;
+             enemy.ghostNum = powerdot.ghostNum;
+         }
+     }
+
+     if(powerdot.pcountdown>0){
+         powerdot.pcountdown--;
+     }
+     if(powerdot.powerup){
+        context.fillStyle = "#ffffff";
+        context.beginPath();
+        context.arc(powerdot.x, powerdot.y, 9, 0, Math.PI * 2, true);
+        context.closePath();
+        context.fill();
+     }
 
 
+
+
+
+     if(enemy.flash == 0){enemy.flash = 32;}else{enemy.flash =0;}
      context.font = "20px Verdana";
      context.fillStyle = "white";
      context.fillText("Pac-Man: " +score+" vs Ghost:" +gscore, 50, 20);
 
 
-     context.drawImage(mainImage, enemy.ghostNum,0, 32, 32, enemy.x, enemy.y, 32,32);
+     context.drawImage(mainImage, enemy.ghostNum, enemy.flash, 32, 32, enemy.x, enemy.y, 32,32);
      context.drawImage(mainImage, player.pacmouth, player.pacdir, 32, 32, player.x, player.y, 32,32);
 
 
